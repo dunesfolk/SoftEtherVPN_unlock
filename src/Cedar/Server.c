@@ -10771,7 +10771,7 @@ bool SiIsEnterpriseFunctionsRestrictedOnOpenSource(CEDAR *c)
 	{
 		return false;
 	}
-
+	return false;
 
 	SiGetCurrentRegion(c, region, sizeof(region));
 
