@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.15)
 set(BUILD_NUMBER CACHE STRING "The number of the current build.")
 
 if ("${BUILD_NUMBER}" STREQUAL "")
-	set(BUILD_NUMBER "5189")
+	set(BUILD_NUMBER "5190")
 endif()
 
 if (BUILD_NUMBER LESS 5180)
@@ -27,8 +27,11 @@ project("SoftEther VPN"
 
 set(CMAKE_C_STANDARD 99)
 
-set(TOP_DIRECTORY ${CMAKE_SOURCE_DIR})
-set(BUILD_DIRECTORY ${CMAKE_BINARY_DIR})
+# Subproject-safe paths: the Android entry (SoftEtherVPN-Android/CMakeLists.txt)
+# adds this root via add_subdirectory; for a plain top-level build CURRENT
+# equals SOURCE/BINARY dir exactly as before.
+set(TOP_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+set(BUILD_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 # We define a dedicated variable because CMAKE_BUILD_TYPE can have different
 # configurations than "Debug" and "Release", such as "RelWithDebInfo".

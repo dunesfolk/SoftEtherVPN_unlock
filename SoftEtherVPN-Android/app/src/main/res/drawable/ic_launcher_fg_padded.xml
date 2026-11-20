@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Adaptive-icon foreground: drawable/softether_vpn.xml fills its own 48-unit
+     viewport, so AdaptiveIconDrawable draws it full-bleed; these insets shrink it
+     to 51% of the 108dp canvas — logo 55.1dp wide, its outermost corners 35.5dp
+     from the centre, inside the 72dp visible window (radius 36dp) so no launcher
+     shape mask clips the logo. The pre-vector foreground PNG needed only 12%
+     because it was frameless (dots + gray square) and padded itself: it drew its
+     content at 67% of the bitmap. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/softether_vpn"
+    android:insetLeft="24.5%"
+    android:insetTop="24.5%"
+    android:insetRight="24.5%"
+    android:insetBottom="24.5%" />
