@@ -6568,7 +6568,13 @@ void GenerateEui64Address6(UCHAR *dst, UCHAR *mac)
 	}
 
 	Copy(dst, mac, 3);
-	Copy(dst + 5, mac, 3);
+	// The last three bytes are the second half of the MAC address, not its first
+	// half again: with them repeated, the EUI-64 (and so an IPv6 interface identifier
+	// built from it) would not match the MAC it was derived from. The core's own
+	// router on a device hub segment has the correct form (device: an RA's router
+	// link-local fe80::5c50:88ff:fed7:4d0f for MAC 5E-50-88-D7-4D-0F), so this only
+	// ever affected addresses generated here.
+	Copy(dst + 5, mac + 3, 3);
 
 	dst[3] = 0xff;
 	dst[4] = 0xfe;
@@ -11914,9 +11920,16 @@ bool StartSSLEx3(SOCK *sock, X *x, K *priv, LIST *chain, UINT ssl_timeout, char 
 	}
 
 	#if OPENSSL_VERSION_NUMBER >= 0x30000000L
-		SSL_set1_groups_list(sock->ssl, PQ_GROUP_LIST);
+		// Set the classical list first, then try the list with post-quantum groups,
+		// so that the classical list stays in effect when post-quantum groups are
+		// not available
+		SSL_set1_groups_list(sock->ssl, TLS_GROUP_LIST_CLASSIC);
+		if (SSL_set1_groups_list(sock->ssl, TLS_GROUP_LIST_WITH_PQ) == 0)
+		{
+			Debug("Post-quantum TLS groups are not available, using classical groups only.\n");
+		}
 	#endif
-	
+
 	if (sock->ServerMode)
 	{
 //		Lock(ssl_connect_lock);
@@ -14362,7 +14375,12 @@ void BindConnectThreadForIPv4(THREAD *thread, void *param)
 		else if (force_use_natt)
 		{
 			// The connection by forcing the use of NAT-T (not to connection with normal TCP)
-			SOCK *nat_t_sock = NewRUDPClientNatT(p->NatT_SvcName, ip, p->NatT_ErrorCode, p->Timeout, p->CancelFlag,	p->HintStr, p->Hostname);
+			char target_hostname[MAX_SIZE];
+			SOCK *nat_t_sock;
+
+			IPToStr(target_hostname, sizeof(target_hostname), ip);
+
+			nat_t_sock = NewRUDPClientNatT(p->NatT_SvcName, ip, p->NatT_ErrorCode, p->Timeout, p->CancelFlag, p->HintStr, target_hostname);
 
 			if (nat_t_sock != NULL)
 			{
@@ -14415,7 +14433,7 @@ void BindConnectThreadForIPv4(THREAD *thread, void *param)
 			p2.FinishEvent = finish_event;
 
 			StrCpy(p2.HintStr, sizeof(p2.HintStr), p->HintStr);
-			StrCpy(p2.TargetHostname, sizeof(p2.TargetHostname), p->Hostname);
+			IPToStr(p2.TargetHostname, sizeof(p2.TargetHostname), ip);
 			StrCpy(p2.SvcName, sizeof(p2.SvcName), p->NatT_SvcName);
 			p2.Delay = 30;		// Delay by 30ms
 
